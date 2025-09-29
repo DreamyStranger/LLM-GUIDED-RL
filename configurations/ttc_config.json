@@ -1,0 +1,7 @@
+{
+    "observation": {
+      "type": "TimeToCollision",
+      "horizon": 10
+    }
+}
+  

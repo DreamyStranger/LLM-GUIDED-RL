@@ -1,0 +1,10 @@
+gymnasium
+stable-baselines3
+numpy
+pygame
+ollama
+tqdm
+highway-env
+hiredis
+imageio[ffmpeg]
+tensorboard
