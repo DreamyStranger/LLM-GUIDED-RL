@@ -181,7 +181,7 @@
             29.483870967741936,
             29.806451612903224
         ],
-        "avg_trip_time_successful": 30.0,
+        "avg_trip_time_successful(timesteps, ignore)": 30.0,
         "lane_changes_per_all": [
             8,
             2,

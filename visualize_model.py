@@ -10,37 +10,6 @@ from utils.io_configs import *
 from utils.wrappers import *
 from utils.plots import *
 
-def make_grid_with_borders(frames_list, grid_shape=(2,2), border_size=5, border_color=(0,0,0), scale_factor=1.5):
-    """
-    Combine 4 frames (HxWx3) into a 2x2 grid with borders and larger windows.
-    """
-    pil_frames = [Image.fromarray(f) for f in frames_list]
-    
-    # Optionally scale frames up
-    w, h = pil_frames[0].size
-    new_w, new_h = int(w*scale_factor), int(h*scale_factor)
-    
-    bordered = []
-    for f in pil_frames:
-        f_resized = f.resize((new_w - 2*border_size, new_h - 2*border_size))
-        f_bordered = ImageOps.expand(f_resized, border=border_size, fill=border_color)
-        bordered.append(f_bordered)
-    
-    # Fill missing frames if less than grid size
-    total_slots = grid_shape[0]*grid_shape[1]
-    while len(bordered) < total_slots:
-        blank = Image.new("RGB", (new_w, new_h), color=border_color)
-        bordered.append(blank)
-    
-    # Stack into rows
-    rows = []
-    for r in range(grid_shape[0]):
-        row = np.hstack([np.array(bordered[r*grid_shape[1] + c]) for c in range(grid_shape[1])])
-        rows.append(row)
-    
-    grid_frame = np.vstack(rows)
-    return grid_frame
-
 def main():
     # 1) GPU
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -54,8 +23,7 @@ def main():
     env_config = load_env_config(obs_space)
 
     # 3) Get eval_id
-    num_test_episodes, eval_id = get_evaluation_config()
-    assert num_test_episodes >= 4, "Need at least 4 episodes for 2x2 grid video"
+    eval_id = get_evaluation_environment()
 
     # 4) Build the path to the model
     model_load_path = build_path(

@@ -4,46 +4,25 @@ import pandas as pd
 import json
 from statistics import mean
 
-def parse_monitor_logs(monitor_csv_path):
-    """
-    Reads a CSV with columns assumed to be [r, l, t].
-    Skips the first two lines (#comment and header).
-    Returns:
-      - row_indices: list of integers (1..N) for each row
-      - rewards: list of floats from column 0 (r)
-      - times:   list of floats from column 2 (t)
-    """
-    row_indices = []
-    rewards = []
-    times = []
-
-    if not os.path.isfile(monitor_csv_path):
-        print(f"Monitor CSV not found: {monitor_csv_path}")
-        return row_indices, rewards, times
-
-    with open(monitor_csv_path, "r") as f:
-        reader = csv.reader(f)
-        # Skip the first two lines: comment + header
-        next(reader, None)
-        next(reader, None)
-
-        row_count = 0
-        for row in reader:
-            # row expected: [r_str, l_str, t_str]
-            if len(row) < 3:
-                continue
-            row_count += 1
-
-            r_val = float(row[0])  # reward
-            t_val = float(row[2])  # time
-
-            row_indices.append(row_count)
-            rewards.append(r_val)
-            times.append(t_val)
-
-    return row_indices, rewards, times
-
 def make_log_row(obs_space, episode, step_idx, obs, action, reward, done, truncated, crashed, trip_time):
+    """
+    Create a dictionary representing a single step in an episode for logging.
+
+    Args:
+        obs_space (str): Type of observation space ('ttc' or other).
+        episode (int): Episode index.
+        step_idx (int): Step index within the episode.
+        obs (np.ndarray): Processed observation array (shape: 4x1 for 'ttc').
+        action (int): Action taken.
+        reward (float): Reward received.
+        done (bool): Whether episode terminated.
+        truncated (bool): Whether episode was truncated.
+        crashed (bool): Whether the agent crashed.
+        trip_time (float): Time elapsed in the episode.
+
+    Returns:
+        dict: Dictionary representing the step log.
+    """
     if obs_space == "ttc":
         ego_speed = obs[0, 0]
         ttc_left = obs[1, 0]
@@ -76,6 +55,13 @@ def make_log_row(obs_space, episode, step_idx, obs, action, reward, done, trunca
         }
 
 def log_evaluation_results(results, path):
+    """
+    Save evaluation results to a CSV file.
+
+    Args:
+        results (list[dict]): List of step dictionaries (from make_log_row).
+        path (str): File path to save CSV.
+    """
     if not results:
         print("No evaluation results to save.")
         return
@@ -93,9 +79,7 @@ def compute_success_rate(log_csv_path):
         log_csv_path (str): Path to the CSV evaluation log file.
 
     Returns:
-        float: No crash rate between 0 and 1.
-        int: Number of no-crash episodes.
-        int: Total episodes.
+        float: No-crash rate as percentage (0-100%).
     """
     df = pd.read_csv(log_csv_path)
     # Group by episode and check if any step crashed
@@ -111,14 +95,14 @@ def compute_success_rate(log_csv_path):
 
 def compute_avg_speed(log_csv_path, only_successful=True):
     """
-    Computes average ego speed per episode.
+    Compute average ego speed per episode.
 
     Args:
         log_csv_path (str): Path to the log CSV file.
         only_successful (bool): Whether to include only non-crashed episodes.
 
     Returns:
-        List[float]: Average speeds per episode (filtered if specified).
+        list[float]: Average speeds per episode (filtered if specified).
     """
     df = pd.read_csv(log_csv_path)
 
@@ -134,7 +118,15 @@ def compute_avg_speed(log_csv_path, only_successful=True):
     return avg_speeds
 
 def compute_avg_trip_time(log_csv_path):
-    "Computes Average trip time accross successful episodes"
+    """
+    Compute the average trip time in timesteps(only useful for knowing total number of steps in episode!) across successful episodes.
+
+    Args:
+        log_csv_path (str): Path to the log CSV file.
+
+    Returns:
+        float: Average trip time for non-crashed episodes. This represent timestep duration of episodes only.
+    """
     df = pd.read_csv(log_csv_path)
     episode_end = df.groupby("episode").last().reset_index()
     successful_episodes = episode_end[episode_end["crashed"] == 0]
@@ -146,11 +138,11 @@ def compute_lane_changes(log_csv_path, lane_change_actions=(0, 2), only_successf
 
     Args:
         log_csv_path (str): Path to the CSV evaluation log file.
-        lane_change_actions: Set of action indices that represent lane changes.
+        lane_change_actions (tuple[int], optional): Action indices representing lane changes.
         only_successful (bool): If True, only consider episodes without a crash.
 
     Returns:
-        List[int]: Number of lane changes per (filtered) episode.
+        list[int]: Number of lane changes per episode.
     """
     df = pd.read_csv(log_csv_path)
 
@@ -174,6 +166,20 @@ def compute_lane_changes(log_csv_path, lane_change_actions=(0, 2), only_successf
     return lane_change_counts
 
 def make_model_info(env_id, run_id, seed, training_steps, mode, obs_space):
+    """
+    Create a dictionary summarizing model training information.
+
+    Args:
+        env_id (str): Training environment ID.
+        run_id (str): Run ID.
+        seed (int): Random seed.
+        training_steps (int): Number of training steps.
+        mode (str): Training mode ('RL' or 'Hybrid').
+        obs_space (str): Observation space type.
+
+    Returns:
+        dict: Model information dictionary.
+    """
     return {
         "training_env": env_id,
         "run_id": run_id,
@@ -184,12 +190,32 @@ def make_model_info(env_id, run_id, seed, training_steps, mode, obs_space):
     }
 
 def make_eval_info(eval_id, num_test_episodes):
+    """
+    Create a dictionary summarizing evaluation information.
+
+    Args:
+        eval_id (str): Evaluation environment ID.
+        num_test_episodes (int): Number of evaluation episodes.
+
+    Returns:
+        dict: Evaluation information dictionary.
+    """
     return {
         "evaluation_env": eval_id,
         "num_episodes": num_test_episodes,
     }
 
 def compute_metrics(log_csv_path, lane_change_actions=[0, 2]):
+    """
+    Compute all evaluation metrics from log CSV.
+
+    Args:
+        log_csv_path (str): Path to the CSV evaluation log file.
+        lane_change_actions (tuple[int], optional): Action indices representing lane changes.
+
+    Returns:
+        dict: Metrics dictionary including success rate, average speeds, lane changes, and summary statistics.
+    """
     # Raw lists of per-episode values
     all_speeds = compute_avg_speed(log_csv_path, only_successful=False)
     successful_speeds = compute_avg_speed(log_csv_path, only_successful=True)
@@ -200,7 +226,7 @@ def compute_metrics(log_csv_path, lane_change_actions=[0, 2]):
     metrics["no_crash_rate"] = compute_success_rate(log_csv_path)
     metrics["avg_speed_all"] = all_speeds
     metrics["avg_speed_successful"] = successful_speeds
-    metrics["avg_trip_time_successful"] = compute_avg_trip_time(log_csv_path)
+    metrics["avg_trip_time_successful(timesteps, ignore)"] = compute_avg_trip_time(log_csv_path)
     metrics["lane_changes_per_all"] = all_lane_changes
     metrics["lane_changes_per_successful"] = successful_lane_changes
     # Summary statistics
@@ -212,6 +238,15 @@ def compute_metrics(log_csv_path, lane_change_actions=[0, 2]):
     return metrics
 
 def save_experiment_summary(log_csv_path, model_info, eval_info, metrics):
+    """
+    Save experiment summary (model info, evaluation info, metrics) as a JSON file.
+
+    Args:
+        log_csv_path (str): Path where CSV logs are saved.
+        model_info (dict): Dictionary of model training information.
+        eval_info (dict): Dictionary of evaluation information.
+        metrics (dict): Dictionary of computed metrics.
+    """
     summary = {
         "model_info": model_info,
         "evaluation_info": eval_info,

@@ -2,8 +2,15 @@ import numpy as np
 
 def decode_single_direction(one_hot: np.ndarray, time_bin_size: float, horizon: float) -> float:
     """
-    Decode a 1D one-hot TTC vector to a scalar TTC value.
-    Returns horizon if no bin is active.
+    Decode a 1D one-hot TTC vector into a scalar TTC value.
+
+    Args:
+        one_hot (np.ndarray): one-hot vector representing TTC bins.
+        time_bin_size (float): Size of each time bin.
+        horizon (float): Maximum horizon value to return if no bin is active.
+
+    Returns:
+        float: Decoded TTC value. Returns horizon if no bin is active.
     """
     indices = np.where(one_hot > 0)[0]
     if len(indices) == 0:
@@ -12,10 +19,23 @@ def decode_single_direction(one_hot: np.ndarray, time_bin_size: float, horizon: 
 
 def preprocess_obs(raw_obs: np.ndarray, ego_speed: float, time_bin_size: float = 1.0) -> np.ndarray:
     """
-    Simplified preprocessing:
-    - Select the central speed bin from raw TTC obs (shape: speeds x lanes x time_bins)
-    - Decode one-hot TTC vector per lane into scalar TTC
-    - Stack ego speed (rounded int) with decoded TTC scalars (shape: 4 x 1)
+    Preprocess a raw TTC observation into a compact feature vector.
+
+    Steps:
+        - Select the central speed bin from raw TTC obs 
+          (input shape: speeds x lanes x time_bins).
+        - Decode one-hot TTC vector per lane into a scalar TTC.
+        - Stack ego speed (rounded to int) with decoded TTC scalars.
+
+    Args:
+        raw_obs (np.ndarray): Raw TTC observation (3D array).
+        ego_speed (float): Ego vehicle speed.
+        time_bin_size (float, optional): Size of each TTC bin. Defaults to 1.0.
+
+    Returns:
+        np.ndarray: Processed observation vector of shape (4, 1),
+                    where the first element is ego speed,
+                    followed by TTC values for each lane.
     """
     speeds, lanes, time_bins = raw_obs.shape
     horizon = time_bins * time_bin_size

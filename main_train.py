@@ -11,21 +11,15 @@ from utils.io_configs import *
 from utils.wrappers import *
 
 def main():
-    # Device  + seed
+    # 1) Device  + seed
     device = torch.device("cpu")
     print(f"Using device: {device}")
     seed = set_seed()
 
-    # 1) Config
+    # 2) Config
     env_id, mode, obs_space, run_id = get_user_choices()
     env_config = load_env_config(obs_space)
     total_timesteps = get_training_steps()
-
-    # 2) Monitor logging setup
-    monitor_name = "monitor_" + run_id + ".csv"
-    monitor_csv_path = build_path_and_ensure_dir(
-        dir_parts=["logs", "monitor_logs", env_id, mode, obs_space, total_timesteps, seed],
-        filename=monitor_name)
 
     # 3) Create environment
     env = gym.make(env_id, render_mode=None, config=env_config)
@@ -34,6 +28,11 @@ def main():
     if obs_space == "ttc":
         env = TTCWrapper(env, mode=mode)
     env.reset(seed=seed)
+    if mode == "Hybrid":
+        llm_choice, shape_reward = get_hybrid_setup()
+        env.shape_reward = shape_reward
+        if llm_choice == "gemma3":
+            env.llm = "gemma3:12b"
 
     # 5) Build DQN
     model = DQN(
@@ -52,7 +51,6 @@ def main():
         device=device,
         seed=seed
     )
-
     # 6) TensorBoard
     tb_dir = build_dir_path(
         ["logs", "tensorboard_logs", env_id, mode, obs_space, str(total_timesteps), str(seed), run_id])
@@ -75,7 +73,6 @@ def main():
 
     # 9) Log summary
     print(f"Model saved to: {model_save_path}")
-    print(f"Monitor logs saved to: {monitor_csv_path}")
     print(f"TensorBoard logs saved to: {tb_dir}")
     print(f"Training took {end - start:.2f} seconds")
 

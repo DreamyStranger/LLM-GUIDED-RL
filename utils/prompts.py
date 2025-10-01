@@ -1,11 +1,4 @@
 import ollama
-from openai import OpenAI
-import os
-
-# Replace with your actual API key
-key = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=key)
-
 
 ACTIONS_ALL = {
     0: 'LANE_LEFT',
@@ -17,7 +10,13 @@ ACTIONS_ALL = {
 
 def predict_action_gemma3(obs):
     """
-    Prompts GPT to choose a discrete driving action (0-4) based on ego speed and TTC observation.
+    Use Gemma3-12B LLM to choose a discrete driving action (0–4) based on ego speed and TTC observations.
+
+    Args:
+        obs (np.ndarray): Observation array of shape (4,1) [ego_speed, left_ttc, center_ttc, right_ttc].
+
+    Returns:
+        int: Action index (0–4) selected by LLM, defaults to 1 (IDLE) on error.
     """
     ego_speed = obs[0, 0]
     left_ttc = obs[1, 0]
@@ -72,6 +71,15 @@ def predict_action_gemma3(obs):
 
     
 def predict_action_qwen3(obs):
+    """
+    Use Qwen3 LLM to choose a discrete driving action (0–4) based on ego speed and TTC observations.
+
+    Args:
+        obs (np.ndarray): Observation array of shape (4,1) [ego_speed, left_ttc, center_ttc, right_ttc].
+
+    Returns:
+        int: Action index (0–4) selected by LLM, defaults to 1 (IDLE) on error.
+    """
     ego_speed = obs[0, 0]
     left_ttc = obs[1, 0]
     current_ttc = obs[2, 0]
@@ -126,8 +134,16 @@ def predict_action_qwen3(obs):
 
 def get_llm_shaping_score_lane_focused(prev_obs, action_taken, new_obs, model):
     """
-    Lane-focused shaping score: evaluates decision based on current lane safety (TTC) and speed change.
-    Returns score between 0 and 10.
+    Evaluate lane-focused shaping score for a given action.
+
+    Args:
+        prev_obs (np.ndarray): Observation before action (4,1).
+        action_taken (int): Index of action taken (0–4).
+        new_obs (np.ndarray): Observation after action (4,1).
+        model (str): LLM model to use for scoring.
+
+    Returns:
+        float: Score between 0 and 10 evaluating safety and smooth driving.
     """
     action_str = ACTIONS_ALL[action_taken]
 
@@ -166,6 +182,16 @@ def get_llm_shaping_score_lane_focused(prev_obs, action_taken, new_obs, model):
         return 0.0
 
 def predict_action_llm(llm_type, obs):
+    """
+    Wrapper to predict action using a specified LLM.
+
+    Args:
+        llm_type (str): "gemma3" or "qwen3".
+        obs (np.ndarray): Observation array (4,1).
+
+    Returns:
+        int: Action index (0–4) predicted by the chosen LLM.
+    """
     if llm_type == "gemma3":
         return predict_action_gemma3(obs)
     elif llm_type == "qwen3":

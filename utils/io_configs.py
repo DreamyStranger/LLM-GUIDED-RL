@@ -6,8 +6,10 @@ import torch
 
 def set_seed():
     """
-    Prompts user to enter a seed.
-    If input is empty, returns a random seed between 1 and 1000.
+    Prompt the user to enter a seed and set it across libraries.
+
+    Returns:
+        int: The chosen or randomly generated seed.
     """
     user_input = input("Enter a seed (or press Enter for random): ").strip()
     if user_input == "":
@@ -24,6 +26,12 @@ def set_seed():
     return seed
 
 def get_seed():
+    """
+    Prompt the user to input a seed used for training of a model to load.
+
+    Returns:
+        str: Entered seed value.
+    """
     prompt = "Input seed used for training of the model you want to load:"
     seed = input(prompt).strip()
     return seed
@@ -31,7 +39,14 @@ def get_seed():
 
 def load_env_config(obs_space, base_path="configurations"):
     """
-    Loads the JSON config file for environment settings based on observation_type.
+    Load the JSON config file for environment settings.
+
+    Args:
+        obs_space (str): Observation type (e.g., "ttc").
+        base_path (str, optional): Base folder where configs are stored.
+
+    Returns:
+        dict: Parsed config data if file exists, otherwise empty dict.
     """
     config_filename = f"{obs_space}_config.json"
     config_path = os.path.join(base_path, config_filename)
@@ -50,16 +65,40 @@ def load_env_config(obs_space, base_path="configurations"):
     return config_data
 
 def get_user_choices():
-    env_id = choose_training_environment()
-    mode = choose_training_type()
-    obs_space = choose_observation_space()
+    """
+    Prompt the user for setup choices.
+
+    Returns:
+        tuple: (env_id, mode, obs_space, run_id)
+    """
+    env_id = get_training_environment()
+    mode = get_training_type()
+    obs_space = get_observation_space()
     run_id = get_run_id()
     return env_id, mode, obs_space, run_id
 
 def get_evaluation_config():
+    """
+    Prompt the user for evaluation setup.
+
+    Returns:
+        tuple: (num_test_episodes, eval_id)
+    """
     num_test_episodes = get_num_test_episodes()
     eval_id = get_evaluation_environment()
     return num_test_episodes, eval_id
+
+def get_hybrid_setup():
+    """
+    Prompt the user to configure both LLM and shape reward choices.
+
+    Returns:
+        tuple: (llm_choice, shape_reward)
+    """
+    llm_choice = get_llm_choice()
+    shape_choice = get_shape_reward()
+    return llm_choice, shape_choice
+
 
 def build_dir_path(dir_parts):
     """
@@ -105,8 +144,30 @@ def build_path_and_ensure_dir(dir_parts, filename):
     os.makedirs(dir_path, exist_ok=True)
     return path
 
+def get_shape_reward():
+    """
+    Prompt the user to select a shape reward type.
 
-def choose_training_environment():
+    Options:
+        1. dense (default)
+        2. avg
+        3. center
+
+    Returns:
+        str: Selected shape reward type.
+    """
+    options = ["dense", "avg", "center"]
+    print("Choose a shape reward:")
+    for i, opt in enumerate(options, start=1):
+        print(f"{i}. {opt}")
+
+    choice = input("Enter number (default=1): ").strip()
+    if choice.isdigit() and 1 <= int(choice) <= len(options):
+        return options[int(choice) - 1]
+    return "dense"  # default
+
+
+def get_training_environment():
     print("Choose training environment:")
     print("1. highway-fast-v0")
     print("2. highway-v0")
@@ -120,7 +181,7 @@ def choose_training_environment():
         print("Invalid choice, defaulting to 'highway-fast-v0'")
         return "highway-fast-v0"
 
-def choose_training_type():
+def get_training_type():
     print("\nChoose training type:")
     print("1. RL (standard base reward)")
     print("2. Hybrid (LLM + collision penalty)")
@@ -134,7 +195,7 @@ def choose_training_type():
         print("Invalid choice, defaulting to 'RL'")
         return 'RL'
 
-def choose_observation_space():
+def get_observation_space():
     print("\nChoose observation space:")
     print("1. TTC (time to collision)")
     print("2. Kinematics (not implemented as of right now, skip this option)")
@@ -213,6 +274,15 @@ def get_llm_choice(default_option="2"):
         return "gemma3"
 
 def clean(parts):
+    """
+    Normalize path parts by stripping whitespace and replacing spaces/dashes with underscores.
+
+    Args:
+        parts (list of str): Raw folder/file name parts.
+
+    Returns:
+        list of str: Cleaned parts.
+    """
     cleaned = []
     for s in parts:
         s = str(s).strip()

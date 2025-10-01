@@ -1,7 +1,7 @@
 {
     "model_info": {
         "training_env": "highway-fast-v0",
-        "run_id": "1",
+        "run_id": "q0",
         "seed": "42",
         "training_steps": 20000,
         "mode": "Hybrid",
@@ -213,7 +213,7 @@
             27.93548387096774,
             25.0
         ],
-        "avg_trip_time_successful": 30.0,
+        "avg_trip_time_successful(timesteps, ignore)": 30.0,
         "lane_changes_per_all": [
             0,
             6,
