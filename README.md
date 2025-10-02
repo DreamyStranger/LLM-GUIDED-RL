@@ -46,6 +46,13 @@ venv\Scripts\activate     # Windows
 pip install -r requirements.txt
 ```
 
+3. Install Ollama and download required LLMs:
+```bash
+# Install Ollama (visit https://ollama.ai for installation instructions)
+# Then pull the required models:
+ollama pull qwen3:14b
+ollama pull gemma3:12b
+
 ## Usage
 
 ### Training RL Agent
