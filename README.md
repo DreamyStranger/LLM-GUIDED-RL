@@ -107,8 +107,16 @@ All metrics are stored in CSV logs and summarized in JSON files for each experim
 * LLM predictions are prompted to prioritize safety, human-like behavior, and efficiency.
 
 ## Dependencies
-
-* `gymnasium`, `highway_env`, `numpy`, `pandas`, `torch`, `stable-baselines3`, `ollama`, `tqdm`, `imageio`, `Pillow`
+* `gymnasium`
+* `stable-baselines3`
+* `numpy`
+* `pygame`
+* `ollama`
+* `tqdm`
+* `highway-env`
+* `hiredis`
+* `imageio[ffmpeg]`
+* `tensorboard`
 
 ## License
 
