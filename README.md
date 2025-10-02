@@ -52,6 +52,7 @@ pip install -r requirements.txt
 # Then pull the required models:
 ollama pull qwen3:14b
 ollama pull gemma3:12b
+```
 
 ## Usage
 
