@@ -54,7 +54,7 @@ pip install -r requirements.txt
 python main_train.py
 ```
 
-* Select environment, observation space (`ttc` recommended), mode (`RL` or `Hybrid`), and run ID.
+* Select environment, observation space (`ttc'), mode (`RL` or `Hybrid`), and run ID.
 * If `Hybrid` mode is selected, choose LLM (`gemma3` or `qwen3`) and reward shaping type.
 
 ### Evaluating RL Agent
